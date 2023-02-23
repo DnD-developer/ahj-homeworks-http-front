@@ -72,12 +72,18 @@
 	}
 
 	&-bottom {
+		display: none;
+
 		padding-left: 35px;
 		padding-bottom: 15px;
 
 		margin-top: 30px;
 
 		max-width: 60%;
+
+		&.show {
+			display: block;
+		}
 	}
 }
 
