@@ -4,4 +4,14 @@
 @import "./global/global";
 @import "./global/animation";
 
+//!Сomponents
+@import "../../js/components/task-manager/task-manager.scss";
+
+.content {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+//!media
 @import "./global/media";
