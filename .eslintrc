@@ -54,6 +54,7 @@
 				"enforceForRenamedProperties": false
 			}
 		],
-		"operator-linebreak": [0]
+		"operator-linebreak": [0],
+		"no-console": [0]
 	}
 }
