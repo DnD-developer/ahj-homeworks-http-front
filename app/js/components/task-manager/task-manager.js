@@ -12,7 +12,7 @@ export default class TaskManager {
 
 	async init() {
 		try {
-			this.tickets = await sendToServer("get")
+			this.tickets = await sendToServer("get", null, this.parrentSelectorDomEl)
 		} catch (error) {
 			console.log(error)
 		}
@@ -96,7 +96,7 @@ export default class TaskManager {
 	async choiseMehodtoSend(data, eventElement) {
 		if (this.method === "add") {
 			try {
-				const result = await sendToServer("add", data)
+				const result = await sendToServer("add", data, this.popup.querySelector(".taskmanager-popup__form"))
 
 				this.tickets.push(data)
 
@@ -104,6 +104,7 @@ export default class TaskManager {
 			} catch (error) {
 				console.log("Не получилось добавить задачу")
 			} finally {
+				this.popup.remove()
 				this.renderTaskList()
 			}
 
@@ -112,7 +113,7 @@ export default class TaskManager {
 
 		if (this.method === "delete") {
 			try {
-				const idDeleteIndex = await sendToServer("delete", data)
+				const idDeleteIndex = await sendToServer("delete", data, this.popup.querySelector(".taskmanager-popup__form"))
 
 				this.tickets.splice(idDeleteIndex, 1)
 
@@ -120,6 +121,7 @@ export default class TaskManager {
 			} catch (error) {
 				console.log("Не получилось удалить задачу")
 			} finally {
+				this.popup.remove()
 				this.renderTaskList()
 			}
 
@@ -128,7 +130,7 @@ export default class TaskManager {
 
 		if (this.method === "edit") {
 			try {
-				const idEditIndex = await sendToServer("edit", data)
+				const idEditIndex = await sendToServer("edit", data, this.popup.querySelector(".taskmanager-popup__form"))
 
 				this.tickets[idEditIndex].title = data.title
 				this.tickets[idEditIndex].description = data.description
@@ -138,6 +140,7 @@ export default class TaskManager {
 				console.log(error)
 				console.log("Не получилось отредактировать задачу")
 			} finally {
+				this.popup.remove()
 				this.renderTaskList()
 			}
 
@@ -146,7 +149,7 @@ export default class TaskManager {
 
 		if (this.method === "check") {
 			try {
-				const idCheckIndex = await sendToServer("check", data)
+				const idCheckIndex = await sendToServer("check", data, eventElement.closest(".taskmanager__item"))
 
 				eventElement.classList.toggle("custom-check--active")
 
@@ -163,13 +166,22 @@ export default class TaskManager {
 			let getDescription
 			try {
 				if ((eventElement && !eventElement.classList.contains("show")) || this.popup) {
-					getDescription = await sendToServer("getId", data)
+					const parrentForLoader =
+						eventElement && !eventElement.classList.contains("show")
+							? eventElement.closest(".taskmanager__item")
+							: this.popup.querySelector(".taskmanager-popup__form")
+
+					getDescription = await sendToServer("getId", data, parrentForLoader)
+
 					console.log(`Получено описание ${getDescription}`)
 				}
 
 				if (!this.popup) {
 					eventElement.querySelector(".taskmanager__item-description").textContent = getDescription
+					return
 				}
+
+				this.popup.querySelector(".taskmanager-popup__form-long input").value = getDescription
 			} catch (error) {
 				console.log(error)
 				console.log("Не получилось получить описание")
@@ -182,9 +194,7 @@ export default class TaskManager {
 				eventElement.classList.toggle("show")
 				eventElement.querySelector(".taskmanager__item-description").textContent = "Опиасание не было получено, попробуйте позже"
 			} finally {
-				if (this.popup) {
-					this.popup.querySelector(".taskmanager-popup__form-long input").value = getDescription
-				} else {
+				if (!this.popup) {
 					eventElement.classList.toggle("show")
 				}
 			}
@@ -207,7 +217,7 @@ export default class TaskManager {
 
 	addEventForTaskItem(item) {
 		item.addEventListener("click", async e => {
-			if (e.target.closest(".taskmanager__item-check")) {
+			if (e.target.closest(".taskmanager__item-check") || e.target.closest(".loader")) {
 				return
 			}
 
@@ -218,7 +228,6 @@ export default class TaskManager {
 			}
 
 			if (e.target.closest(".taskmanager__item-edit")) {
-				console.log(this.popup)
 				if (!this.popup) {
 					this.popup = new Popup("body", "edit").init()
 
@@ -230,11 +239,9 @@ export default class TaskManager {
 
 					this.collectFullData({ id: item.dataset.id })
 
-					if (this.popup.querySelector(".taskmanager-popup__form-long input").value !== "") {
-						this.method = "edit"
+					this.method = "edit"
 
-						this.createPopup(item.dataset.id)
-					}
+					this.createPopup(item.dataset.id)
 				}
 			} else if (e.target.closest(".taskmanager__item-delete")) {
 				if (!this.popup) {
@@ -267,11 +274,11 @@ export default class TaskManager {
 				if (e.target.closest(".taskmanager-popup__form-submit")) {
 					const textData = this.collectTextData()
 
+					console.log(textData)
+
 					if (!textData && this.method !== "delete") {
 						return
 					}
-
-					this.popup.remove()
 
 					this.collectFullData({ textData, id })
 				}
