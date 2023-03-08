@@ -1,7 +1,20 @@
-export default async function sendToServer(methodToSend, bodyObject) {
+function createLoader(loaderParrent) {
+	const loader = document.createElement("div")
+	loader.classList.add("loader")
+
+	loader.innerHTML = "<p>Загрузка</p>"
+
+	loaderParrent.appendChild(loader)
+
+	return loader
+}
+
+export default async function sendToServer(methodToSend, bodyObject, loaderParrent) {
 	let bodyToSend
 	let method
 	let postFix
+
+	const loader = createLoader(loaderParrent)
 
 	switch (methodToSend) {
 		case "get":
@@ -42,8 +55,14 @@ export default async function sendToServer(methodToSend, bodyObject) {
 		"Content-Type": "application/json"
 	}
 
-	const response = await fetch(`http://localhost:7070?method=${postFix}`, { method, body: bodyToSend, headers })
-	const responseJson = await response.json()
+	try {
+		const response = await fetch(`http://localhost:7070?method=${postFix}`, { method, body: bodyToSend, headers })
+		const responseJson = await response.json()
 
-	return responseJson
+		return responseJson
+	} catch (error) {
+		return error
+	} finally {
+		loader.remove()
+	}
 }
